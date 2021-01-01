@@ -1,0 +1,72 @@
+commit 6c46102ae6a849cdcc2a922cf04db37041350a85
+Author: fk.luo <fk.luo@trigtop.com>
+Date:   Mon Sep 2 17:10:14 2019 +0800
+
+    add eth key
+
+diff --git a/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts b/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts
+index cf6c250..9172c84 100644
+--- a/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts
++++ b/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts
+@@ -344,7 +344,7 @@
+ 	unifykey{
+ 		compatible = "amlogic, unifykey";
+ 		status = "ok";
+-		unifykey-num = <16>;
++		unifykey-num = <17>;
+ 		unifykey-index-0 = <&keysn_0>;
+ 		unifykey-index-1 = <&keysn_1>;
+ 		unifykey-index-2 = <&keysn_2>;
+@@ -361,6 +361,7 @@
+ 		unifykey-index-13= <&keysn_13>;
+ 		unifykey-index-14= <&keysn_14>;
+ 		unifykey-index-15= <&keysn_15>;
++		unifykey-index-16= <&keysn_16>;
+ 
+ 		keysn_0: key_0{
+ 			key-name = "usid";
+@@ -445,6 +446,11 @@
+ 			key-device = "secure";
+ 			key-permit = "read","write","del";
+ 		};
++               keysn_16:key_16{
++			key-name = "eth_exphy_para";
++			key-device = "normal";
++			key-permit = "read","write","del";
++	 };
+ 	};//End unifykey
+ 
+ 	efusekey:efusekey{
+diff --git a/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts b/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
+index babee14..1d70872 100644
+--- a/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
++++ b/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
+@@ -344,7 +344,7 @@
+ 	unifykey{
+ 		compatible = "amlogic, unifykey";
+ 		status = "ok";
+-		unifykey-num = <16>;
++		unifykey-num = <17>;
+ 		unifykey-index-0 = <&keysn_0>;
+ 		unifykey-index-1 = <&keysn_1>;
+ 		unifykey-index-2 = <&keysn_2>;
+@@ -361,6 +361,7 @@
+ 		unifykey-index-13= <&keysn_13>;
+ 		unifykey-index-14= <&keysn_14>;
+ 		unifykey-index-15= <&keysn_15>;
++		unifykey-index-16= <&keysn_16>;
+ 
+ 		keysn_0: key_0{
+ 			key-name = "usid";
+@@ -445,6 +446,11 @@
+ 			key-device = "secure";
+ 			key-permit = "read","write","del";
+ 		};
++               keysn_16:key_16{
++                       key-name = "eth_exphy_para";
++                       key-device = "normal";
++                       key-permit = "read","write","del";
++			 };
+ 	};//End unifykey
+ 
+ 	efusekey:efusekey{

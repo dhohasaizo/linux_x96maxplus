@@ -1,0 +1,10 @@
+#!/bin/bash
+
+export ARCH=arm
+export CROSS_COMPILE=/opt/gcc-linaro-6.3.1-2017.02-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-
+make x96max_defconfig
+make -j4
+./mkuboot.sh -A arm -O linux -C none  -T kernel -a 0x00108000 -e 0x00108000 -n 'Linux-4.9.113' -d /home/doha/kernel/pro/common/arch/arm/boot/zImage arch/arm/boot/uImage
+make x96max_s905x3.dtb
+cp /home/doha/kernel/pro/common/arch/arm/boot/dts/amlogic/x96max_s905x3.dtb /home/doha/kernel/pro/common/arch/arm/boot/2ndbootloader
+./mkbootimg --second /home/doha/kernel/pro/common/arch/arm/boot/2ndbootloader --kernel /home/doha/kernel/pro/common/arch/arm/boot/uImage --base 0x0 --cmdline "androidboot.dtbo_idx=0 --cmdline root=/dev/mmcblk0p18 buildvariant=userdebug" --os_version 9 --os_patch_level 2018-08-05 --kernel_offset 0x1080000 --header_version 1 --output /home/doha/kernel/pro/common/arch/arm/boot/boot.img

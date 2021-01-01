@@ -1,0 +1,259 @@
+commit 9ce4990c261c3a099781767139cd5a377979ee66
+Author: Zhuo Wang <zhuo.wang@amlogic.com>
+Date:   Tue May 22 11:26:34 2018 +0800
+
+    ethernet: add wol for internal phy
+    
+    PD#166640: add wol for internal phy
+    
+    Change-Id: I1c34af9022e5aa4968516d6826089531b55a1c10
+    Signed-off-by: Zhuo Wang <zhuo.wang@amlogic.com>
+
+diff --git a/drivers/amlogic/ethernet/phy/amlogic.c b/drivers/amlogic/ethernet/phy/amlogic.c
+index 32de2e5..ff88ee7b 100644
+--- a/drivers/amlogic/ethernet/phy/amlogic.c
++++ b/drivers/amlogic/ethernet/phy/amlogic.c
+@@ -59,17 +59,18 @@ void internal_wol_init(struct phy_device *phydev)
+ 	val &= ~0x1000;
+ 	phy_write(phydev, 0x14, val);/*write data to wol register bank*/
+ 	/*write mac address*/
+-	phy_write(phydev, SMI_ADDR_TSTWRITE, mac_addr[0] | mac_addr[1] << 8);
++	phy_write(phydev, SMI_ADDR_TSTWRITE, mac_addr[5] | mac_addr[4] << 8);
+ 	phy_write(phydev, 0x14, 0x4800 | 0x00);
+-	phy_write(phydev, SMI_ADDR_TSTWRITE, mac_addr[2] | mac_addr[3] << 8);
++	phy_write(phydev, SMI_ADDR_TSTWRITE, mac_addr[3] | mac_addr[2] << 8);
+ 	phy_write(phydev, 0x14, 0x4800 | 0x01);
+-	phy_write(phydev, SMI_ADDR_TSTWRITE, mac_addr[4] | mac_addr[5] << 8);
++	phy_write(phydev, SMI_ADDR_TSTWRITE, mac_addr[1] | mac_addr[0] << 8);
+ 	phy_write(phydev, 0x14, 0x4800 | 0x02);
+ 	/*enable wol*/
+ 	phy_write(phydev, SMI_ADDR_TSTWRITE, 0x9);
+ 	phy_write(phydev, 0x14, 0x4800 | 0x03);
+ 	/*enable interrupt*/
+-	phy_write(phydev, 0x1E, 0xe00);
++	val = phy_read(phydev, 0x1E);
++	phy_write(phydev, 0x1E, val | 0xe00);
+ }
+ 
+ void internal_config(struct phy_device *phydev)
+@@ -237,11 +238,30 @@ static int internal_phy_read_status(struct phy_device *phydev)
+ 
+ static int internal_config_init(struct phy_device *phydev)
+ {
+-	/*internal_wol_init(phydev);*/
++	internal_wol_init(phydev);
+ 	internal_config(phydev);
+ 	return genphy_config_init(phydev);
+ }
+ 
++unsigned int support_internal_phy_wol;
++int internal_phy_suspend(struct phy_device *phydev)
++{
++	int value;
++	int rc;
++
++	/*disable link interrupt*/
++	value = phy_read(phydev, 0x1E);
++	phy_write(phydev, 0x1E, value & ~0x50);
++	/*don't power off if wol is needed*/
++	if (support_internal_phy_wol) {
++		pr_info("don't power down phy\n");
++		return 0;
++	}
++
++	rc = genphy_suspend(phydev);
++
++	return rc;
++}
+ static int internal_phy_resume(struct phy_device *phydev)
+ {
+ 	int rc;
+@@ -261,7 +281,7 @@ static int internal_phy_resume(struct phy_device *phydev)
+ 	.features	= 0x10f,
+ 	.config_aneg	= genphy_config_aneg,
+ 	.read_status	= internal_phy_read_status,
+-	.suspend	= genphy_suspend,
++	.suspend	= internal_phy_suspend,
+ 	.resume		= internal_phy_resume,
+ } };
+ 
+diff --git a/drivers/net/ethernet/stmicro/stmmac/dwmac-meson.c b/drivers/net/ethernet/stmicro/stmmac/dwmac-meson.c
+index e15e51b..f6af257 100644
+--- a/drivers/net/ethernet/stmicro/stmmac/dwmac-meson.c
++++ b/drivers/net/ethernet/stmicro/stmmac/dwmac-meson.c
+@@ -101,6 +101,10 @@ static void meson6_dwmac_fix_mac_speed(void *priv, unsigned int speed)
+ #define CFG_MODE (0x7 << 4)
+ #define CFG_EN_HIGH BIT(3)
+ #define ETH_REG3_2_RESERVED 0x7
++
++/*these two store the define of wol in dts*/
++extern unsigned int support_internal_phy_wol;
++extern unsigned int support_external_phy_wol;
+ static void __iomem *network_interface_setup(struct platform_device *pdev)
+ {
+ 	struct device_node *np = pdev->dev.of_node;
+@@ -151,6 +155,16 @@ static void __iomem *network_interface_setup(struct platform_device *pdev)
+ 		}
+ 		if (internal_phy == 1) {
+ 			pr_debug("internal phy\n");
++			/*merge wol from 3.14 start*/
++			if (of_property_read_u32(np,
++						"wol",
++						&support_internal_phy_wol))
++				pr_debug("wol not set\n");
++			else
++				pr_debug("Ethernet :got wol %d .set it\n",
++						support_internal_phy_wol);
++			/*merge wol from 3.14 end*/
++
+ 			/* Get mec mode & ting value  set it in cbus2050 */
+ 			if (of_property_read_u32(np, "mc_val_internal_phy",
+ 						 &mc_val)) {
+@@ -342,6 +356,15 @@ static void __iomem *g12a_network_interface_setup(struct platform_device *pdev)
+ 
+ 	/*config extern phy*/
+ 	if (internal_phy == 0) {
++		/* only exphy support wol since g12a*/
++		/*we enable/disable wol with item in dts with "wol=<1>"*/
++		if (of_property_read_u32(np, "wol",
++						&support_external_phy_wol))
++			pr_debug("exphy wol not set\n");
++		else
++			pr_debug("exphy Ethernet :got wol %d .set it\n",
++						support_external_phy_wol);
++
+ 		/*switch to extern phy*/
+ 		writel(0x0, ETH_PHY_config_addr + ETH_PHY_CNTL2);
+ 		pin_ctl = devm_pinctrl_get_select
+diff --git a/drivers/net/phy/realtek.c b/drivers/net/phy/realtek.c
+index 70c4f2e..797a72b 100644
+--- a/drivers/net/phy/realtek.c
++++ b/drivers/net/phy/realtek.c
+@@ -16,6 +16,16 @@
+ #include <linux/phy.h>
+ #include <linux/module.h>
+ 
++#ifdef CONFIG_AMLOGIC_ETH_PRIVE
++#include <linux/types.h>
++#include <linux/input.h>
++#include <linux/kernel.h>
++#include <linux/delay.h>
++#include <linux/netdevice.h>
++
++#include <linux/amlogic/pm.h>
++#endif
++
+ #define RTL821x_PHYSR		0x11
+ #define RTL821x_PHYSR_DUPLEX	0x2000
+ #define RTL821x_PHYSR_SPEED	0xc000
+@@ -33,6 +43,9 @@
+ MODULE_AUTHOR("Johnson Leung");
+ MODULE_LICENSE("GPL");
+ 
++#ifdef CONFIG_AMLOGIC_ETH_PRIVE
++unsigned int support_external_phy_wol;
++#endif
+ static int rtl821x_ack_interrupt(struct phy_device *phydev)
+ {
+ 	int err;
+@@ -98,6 +111,9 @@ static int rtl8211f_config_init(struct phy_device *phydev)
+ 	int ret;
+ 	u16 reg;
+ 
++#ifdef CONFIG_AMLOGIC_ETH_PRIVE
++	unsigned char *mac_addr = NULL;
++#endif
+ 	ret = genphy_config_init(phydev);
+ 	if (ret < 0)
+ 		return ret;
+@@ -123,6 +139,16 @@ static int rtl8211f_config_init(struct phy_device *phydev)
+ 	phy_write(phydev, RTL8211F_PAGE_SELECT, 0x0);
+ 	/*reset phy to apply*/
+ 	reg = phy_write(phydev, 0x0, 0x9200);
++	/* config mac address for wol*/
++	if ((phydev->attached_dev) && (support_external_phy_wol)) {
++		mac_addr = phydev->attached_dev->dev_addr;
++		phy_write(phydev, RTL8211F_PAGE_SELECT, 0xd8c);
++		phy_write(phydev, 0x10, mac_addr[0] | (mac_addr[1] << 8));
++		phy_write(phydev, 0x11, mac_addr[2] | (mac_addr[3] << 8));
++		phy_write(phydev, 0x12, mac_addr[4] | (mac_addr[5] << 8));
++	} else {
++		pr_debug("not set wol mac\n");
++	}
+ #endif
+ 	/* restore to default page 0 */
+ 	phy_write(phydev, RTL8211F_PAGE_SELECT, 0x0);
+@@ -130,6 +156,59 @@ static int rtl8211f_config_init(struct phy_device *phydev)
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_AMLOGIC_ETH_PRIVE
++int rtl8211f_suspend(struct phy_device *phydev)
++{
++	int value = 0;
++
++	if (support_external_phy_wol) {
++		mutex_lock(&phydev->lock);
++		phy_write(phydev, RTL8211F_PAGE_SELECT, 0xd8a);
++		/*set magic packet for wol*/
++		phy_write(phydev, 0x10, 0x1000);
++		phy_write(phydev, 0x11, 0x9fff);
++		/*pad isolation*/
++		value = phy_read(phydev, 0x13);
++		phy_write(phydev, 0x13, value | (0x1 << 15));
++		/*pin 31 pull high*/
++		phy_write(phydev, RTL8211F_PAGE_SELECT, 0xd40);
++		value = phy_read(phydev, 0x16);
++		phy_write(phydev, 0x16, value | (1 << 5));
++		phy_write(phydev, RTL8211F_PAGE_SELECT, 0);
++
++		mutex_unlock(&phydev->lock);
++	} else {
++		genphy_suspend(phydev);
++	}
++	return 0;
++}
++
++int rtl8211f_resume(struct phy_device *phydev)
++{
++	int value;
++
++	if (support_external_phy_wol) {
++		mutex_lock(&phydev->lock);
++
++		phy_write(phydev, RTL8211F_PAGE_SELECT, 0xd8a);
++		phy_write(phydev, 0x10, 0x0);
++		/*reset wol*/
++		value = phy_read(phydev, 0x11);
++		phy_write(phydev, 0x11, value & ~(0x1 << 15));
++		/*pad isolantion*/
++		value = phy_read(phydev, 0x13);
++		phy_write(phydev, 0x13, value & ~(0x1 << 15));
++
++		phy_write(phydev, RTL8211F_PAGE_SELECT, 0);
++		mutex_unlock(&phydev->lock);
++	} else {
++		genphy_resume(phydev);
++	}
++	pr_debug("%s %d\n", __func__, __LINE__);
++
++	return 0;
++}
++#endif
+ static struct phy_driver realtek_drvs[] = {
+ 	{
+ 		.phy_id         = 0x00008201,
+@@ -184,8 +263,13 @@ static int rtl8211f_config_init(struct phy_device *phydev)
+ 		.read_status	= &genphy_read_status,
+ 		.ack_interrupt	= &rtl8211f_ack_interrupt,
+ 		.config_intr	= &rtl8211f_config_intr,
++#ifdef CONFIG_AMLOGIC_ETH_PRIVE
++		.suspend	= rtl8211f_suspend,
++		.resume		= rtl8211f_resume,
++#else
+ 		.suspend	= genphy_suspend,
+ 		.resume		= genphy_resume,
++#endif
+ 	},
+ };
+ 

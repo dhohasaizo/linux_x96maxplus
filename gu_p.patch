@@ -1,0 +1,13 @@
+diff --git a/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts b/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
+index f92c26d..3d7318e 100644
+--- a/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
++++ b/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
+@@ -17,7 +17,7 @@
+ 
+ /dts-v1/;
+ 
+-#include "partition_mbox_normal.dtsi"
++#include "partition_mbox_normal_P_32.dtsi"
+ #include "mesong12b_a.dtsi"
+ #include "mesong12b_skt-panel.dtsi"
+ 

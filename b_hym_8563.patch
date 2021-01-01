@@ -1,0 +1,25 @@
+commit 1b45bfc6e508ee38deca4efa78426ca36f9e4f3b
+Author: fk.luo <fk.luo@trigtop.com>
+Date:   Sat Jun 1 11:08:28 2019 +0800
+
+    for g12b_w400_b add rtc
+
+diff --git a/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts b/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts
+index 3a4a0b4..c19f59c 100644
+--- a/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts
++++ b/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts
+@@ -914,7 +914,13 @@
+ 		differential_pair = <1>;
+ 		status = "disabled";
+ 	};
+-
++       hym8563: hym8563@51 {
++                 compatible = "haoyu,hym8563";
++                 reg = <0x51>;
++                 i2c_bus = "i2c_bus_c";
++                 #clock-cells = <0>;
++                 status = "okay";
++		  };
+ 	bl_extern_i2c {
+ 		compatible = "bl_extern, i2c";
+ 		dev_name = "lp8556";

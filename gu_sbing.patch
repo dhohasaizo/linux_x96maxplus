@@ -1,0 +1,48 @@
+diff --git a/arch/arm/configs/meson64_a32_defconfig b/arch/arm/configs/meson64_a32_defconfig
+index 1bcbcb8..6e94b79 100755
+--- a/arch/arm/configs/meson64_a32_defconfig
++++ b/arch/arm/configs/meson64_a32_defconfig
+@@ -444,7 +444,7 @@ CONFIG_ATH10K_PCI=m
+ CONFIG_INPUT_POLLDEV=y
+ CONFIG_INPUT_EVDEV=y
+ CONFIG_INPUT_JOYSTICK=y
+-CONFIG_JOYSTICK_XPAD=m
++CONFIG_JOYSTICK_XPAD=y
+ CONFIG_USB_ARCH_HAS_HCD=y
+ CONFIG_USB=y
+ CONFIG_JOYSTICK_XPAD_FF=y
+diff --git a/drivers/usb/core/hub.c b/drivers/usb/core/hub.c
+index f7f6a00..cde1f8c 100644
+--- a/drivers/usb/core/hub.c
++++ b/drivers/usb/core/hub.c
+@@ -7,7 +7,7 @@
+  * (C) Copyright 2001 Brad Hards (bhards@bigpond.net.au)
+  *
+  */
+-
++#define DEBUG 1
+ #include <linux/kernel.h>
+ #include <linux/errno.h>
+ #include <linux/module.h>
+@@ -4761,7 +4761,7 @@ static void hub_port_connect(struct usb_hub *hub, int port1, u16 portstatus,
+ 
+ 	/* Disconnect any existing devices under this port */
+ 	if (udev) {
+-		if (hcd->usb_phy && !hdev->parent)
++		if (hcd->usb_phy && !hdev->parent && !(portstatus & USB_PORT_STAT_CONNECTION))
+ 			usb_phy_notify_disconnect(hcd->usb_phy, udev->speed);
+ 		usb_disconnect(&port_dev->child);
+ 	}
+diff --git a/include/linux/printk.h b/include/linux/printk.h
+index eac1af8..db200ed 100644
+--- a/include/linux/printk.h
++++ b/include/linux/printk.h
+@@ -40,7 +40,7 @@ static inline const char *printk_skip_level(const char *buffer)
+ #define CONSOLE_LOGLEVEL_SILENT  0 /* Mum's the word */
+ #define CONSOLE_LOGLEVEL_MIN	 1 /* Minimum loglevel we let people use */
+ #define CONSOLE_LOGLEVEL_QUIET	 4 /* Shhh ..., when booted with "quiet" */
+-#define CONSOLE_LOGLEVEL_DEFAULT 7 /* anything MORE serious than KERN_DEBUG */
++#define CONSOLE_LOGLEVEL_DEFAULT 8 /* anything MORE serious than KERN_DEBUG */
+ #define CONSOLE_LOGLEVEL_DEBUG	10 /* issue debug messages */
+ #define CONSOLE_LOGLEVEL_MOTORMOUTH 15	/* You can't shut this one up */
+ 

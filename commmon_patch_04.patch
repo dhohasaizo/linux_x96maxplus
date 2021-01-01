@@ -1,0 +1,366 @@
+commit 463ea2d748135f7cd5df281db1898e3e78ec8f1c
+Author: Hong Guo <hong.guo@amlogic.com>
+Date:   Thu Feb 21 15:21:08 2019 +0800
+
+    cpufreq: dynamic adjustment dsu clk with tl1 cpu clk [1/3]
+    
+    PD#SWPL-2842
+    
+    Problem:
+    dynamic adjustment dsu clk with cpu clk.
+    
+    Solution:
+    dynamic adjustment dsu clk with cpu clk.
+    
+    Verify:
+    tl1_x301, verify pass
+    
+    Change-Id: I75f97d9e259dee2c3067e5989b3626e38cf20337
+    Signed-off-by: Hong Guo <hong.guo@amlogic.com>
+    Signed-off-by: Luan Yuan <luan.yuan@amlogic.com>
+
+diff --git a/arch/arm/boot/dts/amlogic/mesontl1.dtsi b/arch/arm/boot/dts/amlogic/mesontl1.dtsi
+index 0918197..5444da1 100644
+--- a/arch/arm/boot/dts/amlogic/mesontl1.dtsi
++++ b/arch/arm/boot/dts/amlogic/mesontl1.dtsi
+@@ -43,10 +43,14 @@
+ 			enable-method = "psci";
+ 			clocks = <&clkc CLKID_CPU_CLK>,
+ 				<&clkc CLKID_CPU_FCLK_P>,
+-				<&clkc CLKID_SYS_PLL>;
++				<&clkc CLKID_SYS_PLL>,
++				<&clkc CLKID_DSU_CLK>,
++				<&clkc CLKID_DSU_PRE_CLK>;
+ 			clock-names = "core_clk",
+ 				"low_freq_clk_parent",
+-				"high_freq_clk_parent";
++				"high_freq_clk_parent",
++				"dsu_clk",
++				"dsu_pre_parent";
+ 			operating-points-v2 = <&cpu_opp_table0>;
+ 			cpu-supply = <&vddcpu0>;
+ 			//cpu-idle-states = <&SYSTEM_SLEEP_0>;
+@@ -60,10 +64,14 @@
+ 			enable-method = "psci";
+ 			clocks = <&clkc CLKID_CPU_CLK>,
+ 				<&clkc CLKID_CPU_FCLK_P>,
+-				<&clkc CLKID_SYS_PLL>;
++				<&clkc CLKID_SYS_PLL>,
++				<&clkc CLKID_DSU_CLK>,
++				<&clkc CLKID_DSU_PRE_CLK>;
+ 			clock-names = "core_clk",
+ 				"low_freq_clk_parent",
+-				"high_freq_clk_parent";
++				"high_freq_clk_parent",
++				"dsu_clk",
++				"dsu_pre_parent";
+ 			operating-points-v2 = <&cpu_opp_table0>;
+ 			cpu-supply = <&vddcpu0>;
+ 			//cpu-idle-states = <&SYSTEM_SLEEP_0>;
+@@ -77,10 +85,14 @@
+ 			enable-method = "psci";
+ 			clocks = <&clkc CLKID_CPU_CLK>,
+ 				<&clkc CLKID_CPU_FCLK_P>,
+-				<&clkc CLKID_SYS_PLL>;
++				<&clkc CLKID_SYS_PLL>,
++				<&clkc CLKID_DSU_CLK>,
++				<&clkc CLKID_DSU_PRE_CLK>;
+ 			clock-names = "core_clk",
+ 				"low_freq_clk_parent",
+-				"high_freq_clk_parent";
++				"high_freq_clk_parent",
++				"dsu_clk",
++				"dsu_pre_parent";
+ 			operating-points-v2 = <&cpu_opp_table0>;
+ 			cpu-supply = <&vddcpu0>;
+ 			//cpu-idle-states = <&SYSTEM_SLEEP_0>;
+@@ -94,10 +106,14 @@
+ 			enable-method = "psci";
+ 			clocks = <&clkc CLKID_CPU_CLK>,
+ 				<&clkc CLKID_CPU_FCLK_P>,
+-				<&clkc CLKID_SYS_PLL>;
++				<&clkc CLKID_SYS_PLL>,
++				<&clkc CLKID_DSU_CLK>,
++				<&clkc CLKID_DSU_PRE_CLK>;
+ 			clock-names = "core_clk",
+ 				"low_freq_clk_parent",
+-				"high_freq_clk_parent";
++				"high_freq_clk_parent",
++				"dsu_clk",
++				"dsu_pre_parent";
+ 			operating-points-v2 = <&cpu_opp_table0>;
+ 			cpu-supply = <&vddcpu0>;
+ 			//cpu-idle-states = <&SYSTEM_SLEEP_0>;
+diff --git a/arch/arm/boot/dts/amlogic/tl1_pxp.dts b/arch/arm/boot/dts/amlogic/tl1_pxp.dts
+index e90bb20..a0dfb6f 100644
+--- a/arch/arm/boot/dts/amlogic/tl1_pxp.dts
++++ b/arch/arm/boot/dts/amlogic/tl1_pxp.dts
+@@ -516,6 +516,144 @@
+ 		reg-names = "ao_exit","ao";
+ 	};
+ 
++	cpu_opp_table0: cpu_opp_table0 {
++		compatible = "operating-points-v2";
++		opp-shared;
++
++		opp00 {
++			opp-hz = /bits/ 64 <100000000>;
++			opp-microvolt = <729000>;
++		};
++		opp01 {
++			opp-hz = /bits/ 64 <250000000>;
++			opp-microvolt = <729000>;
++		};
++		opp02 {
++			opp-hz = /bits/ 64 <500000000>;
++			opp-microvolt = <729000>;
++		};
++		opp03 {
++			opp-hz = /bits/ 64 <667000000>;
++			opp-microvolt = <749000>;
++		};
++		opp04 {
++			opp-hz = /bits/ 64 <1000000000>;
++			opp-microvolt = <769000>;
++		};
++		opp05 {
++			opp-hz = /bits/ 64 <1200000000>;
++			opp-microvolt = <779000>;
++		};
++		opp06 {
++			opp-hz = /bits/ 64 <1404000000>;
++			opp-microvolt = <789000>;
++		};
++		opp07 {
++			opp-hz = /bits/ 64 <1500000000>;
++			opp-microvolt = <799000>;
++		};
++		opp08 {
++			opp-hz = /bits/ 64 <1608000000>;
++			opp-microvolt = <809000>;
++		};
++		opp09 {
++			opp-hz = /bits/ 64 <1704000000>;
++			opp-microvolt = <849000>;
++		};
++		opp10 {
++			opp-hz = /bits/ 64 <1800000000>;
++			opp-microvolt = <899000>;
++		};
++		opp11 {
++			opp-hz = /bits/ 64 <1908000000>;
++			opp-microvolt = <949000>;
++		};
++	};
++
++	cpufreq-meson {
++		compatible = "amlogic, cpufreq-meson";
++		pinctrl-names = "default";
++		pinctrl-0 = <&pwm_ao_d_pins3>;
++		status = "okay";
++	};
++
++	tuner: tuner {
++		compatible = "amlogic, tuner";
++		status = "okay";
++		tuner_cur = <0>; /* default use tuner */
++		tuner_num = <1>; /* tuner number, multi tuner support */
++		tuner_name_0 = "mxl661_tuner";
++		tuner_i2c_adap_0 = <&i2c0>;
++		tuner_i2c_addr_0 = <0x60>;
++		tuner_xtal_0 = <1>; /* 0: 16MHz, 1: 24MHz */
++		tuner_xtal_mode_0 = <3>;
++					/* NO_SHARE_XTAL(0)
++					 * SLAVE_XTAL_SHARE(3)
++					 */
++		tuner_xtal_cap_0 = <25>; /* when tuner_xtal_mode = 3, set 25 */
++	};
++
++	atv-demod {
++		compatible = "amlogic, atv-demod";
++		status = "okay";
++		tuner = <&tuner>;
++		btsc_sap_mode = <1>;
++		/* pinctrl-names="atvdemod_agc_pins"; */
++		/* pinctrl-0=<&atvdemod_agc_pins>; */
++		reg = <0xff656000 0x2000 /* demod reg */
++				0xff63c000 0x2000 /* hiu reg */
++				0xff634000 0x2000 /* periphs reg */
++				0xff64a000 0x2000>; /* audio reg */
++		reg_23cf = <0x88188832>;
++		/*default:0x88188832;r840 on haier:0x48188832*/
++	};
++
++	sd_emmc_b: sd@ffe05000 {
++		status = "okay";
++		compatible = "amlogic, meson-mmc-tl1";
++		reg = <0xffe05000 0x800>;
++		interrupts = <0 190 1>;
++
++		pinctrl-names = "sd_all_pins",
++			"sd_clk_cmd_pins",
++			"sd_1bit_pins";
++		pinctrl-0 = <&sd_all_pins>;
++		pinctrl-1 = <&sd_clk_cmd_pins>;
++		pinctrl-2 = <&sd_1bit_pins>;
++
++		clocks = <&clkc CLKID_SD_EMMC_B>,
++			<&clkc CLKID_SD_EMMC_B_P0_COMP>,
++			<&clkc CLKID_FCLK_DIV2>,
++			<&clkc CLKID_FCLK_DIV5>,
++			<&xtal>;
++		clock-names = "core", "clkin0", "clkin1", "clkin2", "xtal";
++
++		bus-width = <4>;
++		cap-sd-highspeed;
++		cap-mmc-highspeed;
++		max-frequency = <100000000>;
++		disable-wp;
++		sd {
++			pinname = "sd";
++			ocr_avail = <0x200080>; /**VDD voltage 3.3 ~ 3.4 */
++			caps = "MMC_CAP_4_BIT_DATA",
++				"MMC_CAP_MMC_HIGHSPEED",
++				"MMC_CAP_SD_HIGHSPEED",
++				"MMC_CAP_NONREMOVABLE"; /**ptm debug */
++			f_min = <400000>;
++			f_max = <200000000>;
++			max_req_size = <0x20000>; /**128KB*/
++			no_sduart = <1>;
++			gpio_dat3 = <&gpio GPIOC_3 GPIO_ACTIVE_HIGH>;
++			jtag_pin = <&gpio GPIOC_0 GPIO_ACTIVE_HIGH>;
++			gpio_cd = <&gpio GPIOC_10 GPIO_ACTIVE_HIGH>;
++			card_type = <5>;
++			/* 3:sdio device(ie:sdio-wifi),
++			 * 4:SD combo (IO+mem) card
++			 */
++		};
++	};
++
+ }; /* end of / */
+ 
+ &audiobus {
+diff --git a/arch/arm/boot/dts/amlogic/tl1_t962x2_t309.dts b/arch/arm/boot/dts/amlogic/tl1_t962x2_t309.dts
+index 1261207..ab278a8 100644
+--- a/arch/arm/boot/dts/amlogic/tl1_t962x2_t309.dts
++++ b/arch/arm/boot/dts/amlogic/tl1_t962x2_t309.dts
+@@ -1097,7 +1097,6 @@
+ 		};
+ 	}; /*thermal zone end*/
+ 
+-	/*DCDC for MP8756GD*/
+ 	cpu_opp_table0: cpu_opp_table0 {
+ 		compatible = "operating-points-v2";
+ 		opp-shared;
+diff --git a/drivers/amlogic/cpufreq/meson-cpufreq.c b/drivers/amlogic/cpufreq/meson-cpufreq.c
+index 890b86f..996b63b 100644
+--- a/drivers/amlogic/cpufreq/meson-cpufreq.c
++++ b/drivers/amlogic/cpufreq/meson-cpufreq.c
+@@ -397,44 +397,52 @@ static int meson_cpufreq_transition_notifier(struct notifier_block *nb,
+ 	struct clk *dsu_cpu_parent =  policy->clk;
+ 	struct clk *dsu_pre_parent = cpufreq_data->clk_dsu_pre;
+ 	int ret = 0;
+-	static bool first_set = true;
++	unsigned int dsu_set_rate;
+ 
+ 	if (!dsu_clk || !dsu_cpu_parent || !dsu_pre_parent)
+ 		return 0;
+ 
+-	pr_debug("%s,event %ld,freq->old_rate =%u,freq->new_rate =%u!\n",
++	pr_debug("%s:event %ld,old_rate =%u,new_rate =%u!\n",
+ 		__func__, val, freq->old, freq->new);
+ 	switch (val) {
+ 	case CPUFREQ_PRECHANGE:
+-		if (freq->new > MID_RATE) {
+-			pr_debug("%s,dsu clk switch parent to dsu pre!\n",
++		if (freq->new > DSU_LOW_RATE) {
++			pr_debug("%s:dsu clk switch parent to dsu pre!\n",
+ 				__func__);
+-			if (first_set) {
+-				clk_set_rate(dsu_pre_parent, MID_RATE * 1000);
+-				first_set = false;
+-				pr_info("first set gp1 pll to 1.5G!\n");
+-			}
+ 			if (__clk_get_enable_count(dsu_pre_parent) == 0) {
+ 				ret = clk_prepare_enable(dsu_pre_parent);
+ 				if (ret) {
+-					pr_err("%s: CPU%d gp1 pll enable failed\n",
+-							__func__, policy->cpu);
++					pr_err("%s: CPU%d gp1 pll enable failed,ret = %d\n",
++						__func__, policy->cpu, ret);
+ 					return ret;
+ 				}
+ 			}
+ 
++			if (freq->new > CPU_CMP_RATE)
++				dsu_set_rate = DSU_HIGH_RATE;
++			else
++				dsu_set_rate = DSU_LOW_RATE;
++
++			clk_set_rate(dsu_pre_parent, dsu_set_rate * 1000);
++			if (ret) {
++				pr_err("%s: GP1 clk setting %u MHz failed, ret = %d!\n",
++					__func__, dsu_set_rate, ret);
++				return ret;
++			}
++			pr_debug("%s:GP1 clk setting %u MHz!\n",
++				__func__, dsu_set_rate);
++
+ 			ret = clk_set_parent(dsu_clk, dsu_pre_parent);
+ 		}
+ 
+ 		return ret;
+ 	case CPUFREQ_POSTCHANGE:
+-		if (freq->new <= MID_RATE) {
+-			pr_debug("%s,dsu clk switch parent to cpu!\n",
++		if (freq->new <= DSU_LOW_RATE) {
++			pr_debug("%s:dsu clk switch parent to cpu!\n",
+ 				__func__);
+ 			ret = clk_set_parent(dsu_clk, dsu_cpu_parent);
+ 			if (__clk_get_enable_count(dsu_pre_parent) >= 1)
+ 				clk_disable_unprepare(dsu_pre_parent);
+-
+ 		}
+ 
+ 		return ret;
+@@ -525,13 +533,13 @@ static int meson_cpufreq_init(struct cpufreq_policy *policy)
+ 	dsu_clk = of_clk_get_by_name(np, DSU_CLK);
+ 	if (IS_ERR(dsu_clk)) {
+ 		dsu_clk = NULL;
+-		pr_debug("%s: ignor dsu clk!\n", __func__);
++		pr_info("%s: ignor dsu clk!\n", __func__);
+ 	}
+ 
+ 	dsu_pre_parent = of_clk_get_by_name(np, DSU_PRE_PARENT);
+ 	if (IS_ERR(dsu_pre_parent)) {
+ 		dsu_pre_parent = NULL;
+-		pr_debug("%s: ignor dsu pre parent clk!\n", __func__);
++		pr_info("%s: ignor dsu pre parent clk!\n", __func__);
+ 	}
+ 
+ 	cpu_reg = devm_regulator_get(cpu_dev, CORE_SUPPLY);
+diff --git a/drivers/amlogic/cpufreq/meson-cpufreq.h b/drivers/amlogic/cpufreq/meson-cpufreq.h
+index d5508c5..09d6b2e 100644
+--- a/drivers/amlogic/cpufreq/meson-cpufreq.h
++++ b/drivers/amlogic/cpufreq/meson-cpufreq.h
+@@ -43,7 +43,19 @@
+ static unsigned int mid_rate = (1000 * 1000);
+ static unsigned int gap_rate = (10 * 1000 * 1000);
+ static struct cpufreq_freqs freqs;
+-#define MID_RATE (1500 * 1000)
++
++/*
++ * DSU_LOW_RATE:cpu clk less than DSU_LOW_RATE(1.2G)
++ * dsu clk swith to cpu clk
++ * DSU_HIGH_RATE:cpu clk between 1.2G to DSU_HIGH_RATE (1.8G)
++ * dsu clk set to DSU_LOW_RATE(1.2G)
++ * CPU_CMP_RATE: cpu clk greater than CPU_CMP_RATE(1.8G)
++ * dsu clk set to DSU_HIGH_RATE(1.5G)
++ */
++
++#define DSU_LOW_RATE (1200 * 1000)
++#define DSU_HIGH_RATE (1500 * 1000)
++#define CPU_CMP_RATE (1800 * 1000)
+ 
+ /*whether use different tables or not*/
+ bool cpufreq_tables_supply;

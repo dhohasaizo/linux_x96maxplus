@@ -1,0 +1,159 @@
+commit 77c9414b21ae8c898ea1ac5610be0909eb92d153
+Author: fk.luo <fk.luo@trigtop.com>
+Date:   Wed Sep 18 16:49:41 2019 +0800
+
+    for wol
+    
+            device/amlogic
+    	bootloader/uboot-repo/bl33
+
+diff --git a/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts b/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts
+index d0ffc63..cb87197 100644
+--- a/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts
++++ b/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts
+@@ -1365,6 +1365,7 @@
+ 	rx_delay = <1>;
+ 	auto_cali_idx = <0>;
+ 	internal_phy=<0>;
++	wol=<1>;
+ };
+ 
+ &uart_A {
+diff --git a/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts b/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
+index f65b86c..e5b4063 100644
+--- a/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
++++ b/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
+@@ -1344,6 +1344,7 @@
+ 	rx_delay = <1>;
+ 	auto_cali_idx = <0>;
+ 	internal_phy=<0>;
++	wol=<1>;
+ };
+ 
+ &uart_A {
+diff --git a/drivers/amlogic/input/remote/remote_meson.c b/drivers/amlogic/input/remote/remote_meson.c
+index 43a360d..461d345 100644
+--- a/drivers/amlogic/input/remote/remote_meson.c
++++ b/drivers/amlogic/input/remote/remote_meson.c
+@@ -716,7 +716,7 @@ static int remote_resume(struct device *dev)
+ 	spin_unlock_irqrestore(&chip->slock, flags);
+ 
+ #ifdef CONFIG_AMLOGIC_LEGACY_EARLY_SUSPEND
+-	if (get_resume_method() == REMOTE_WAKEUP) {
++	if (get_resume_method() == REMOTE_WAKEUP || get_resume_method() == ETH_PHY_WAKEUP_GPIO) {
+ 		input_event(chip->r_dev->input_device,
+ 		    EV_KEY, KEY_POWER, 1);
+ 		input_sync(chip->r_dev->input_device);
+diff --git a/drivers/amlogic/usb/phy/phy-aml-new-usb2-v2.c b/drivers/amlogic/usb/phy/phy-aml-new-usb2-v2.c
+index 96e4101..219ee3e 100644
+--- a/drivers/amlogic/usb/phy/phy-aml-new-usb2-v2.c
++++ b/drivers/amlogic/usb/phy/phy-aml-new-usb2-v2.c
+@@ -14,7 +14,7 @@
+  * more details.
+  *
+  */
+-
++#include <linux/phy.h>
+ #include <linux/module.h>
+ #include <linux/platform_device.h>
+ #include <linux/slab.h>
+@@ -239,7 +239,7 @@ static void amlogic_new_usb2phy_shutdown(struct usb_phy *x)
+ 		((unsigned long)phy->reset_regs + (0x21 * 4 - 0x8)));
+ 	writel((val & (~temp)), (void __iomem	*)
+ 		((unsigned long)phy->reset_regs + (0x21 * 4 - 0x8)));
+-
++	set_wol();
+ 	phy->suspend_flag = 1;
+ }
+ 
+diff --git a/drivers/net/ethernet/stmicro/stmmac/dwmac-meson.c b/drivers/net/ethernet/stmicro/stmmac/dwmac-meson.c
+index 898bfbd..73b420d 100644
+--- a/drivers/net/ethernet/stmicro/stmmac/dwmac-meson.c
++++ b/drivers/net/ethernet/stmicro/stmmac/dwmac-meson.c
+@@ -671,7 +671,6 @@ static int meson6_dwmac_probe(struct platform_device *pdev)
+ 	.probe  = meson6_dwmac_probe,
+ 	.remove = stmmac_pltfr_remove,
+ #ifdef CONFIG_AMLOGIC_ETH_PRIVE
+-	.shutdown = meson6_dwmac_shutdown,
+ #endif
+ 	.driver = {
+ 		.name           = "meson6-dwmac",
+diff --git a/drivers/net/phy/realtek.c b/drivers/net/phy/realtek.c
+index 0f5615a..df2035b 100644
+--- a/drivers/net/phy/realtek.c
++++ b/drivers/net/phy/realtek.c
+@@ -107,7 +107,7 @@ static int rtl8211f_config_intr(struct phy_device *phydev)
+ 
+ 	return err;
+ }
+-
++struct phy_device *gu;
+ static int rtl8211f_config_init(struct phy_device *phydev)
+ {
+ 	int ret;
+@@ -171,7 +171,7 @@ static int rtl8211f_config_init(struct phy_device *phydev)
+ 
+ 	/* restore to default page 0 */
+ 	phy_write(phydev, RTL8211F_PAGE_SELECT, 0x0);
+-
++	gu = phydev;
+ 	return 0;
+ }
+ 
+@@ -201,7 +201,31 @@ int rtl8211f_suspend(struct phy_device *phydev)
+ 	}
+ 	return 0;
+ }
++extern void set_wol(void){
++        int value = 0;
++
++         if (support_external_phy_wol) {
++                 mutex_lock(&gu->lock);
++                 phy_write(gu, RTL8211F_PAGE_SELECT, 0xd8a);
++                /*set magic packet for wol*/
++                 phy_write(gu, 0x10, 0x1000);
++                 phy_write(gu, 0x11, 0x9fff);
++                 /*pad isolation*/
++                 value = phy_read(gu, 0x13);
++                 phy_write(gu, 0x13, value | (0x1 << 15));
++                 /*pin 31 pull high*/
++                 phy_write(gu, RTL8211F_PAGE_SELECT, 0xd40);
++                 value = phy_read(gu, 0x16);
++                 phy_write(gu, 0x16, value | (1 << 5));
++                 phy_write(gu, RTL8211F_PAGE_SELECT, 0);
++
++                 mutex_unlock(&gu->lock);
++
++	} else {
++                        genphy_suspend(gu);
++	}
+ 
++}
+ int rtl8211f_resume(struct phy_device *phydev)
+ {
+ 	int value;
+diff --git a/include/linux/amlogic/pm.h b/include/linux/amlogic/pm.h
+index 2d71273..071d314 100644
+--- a/include/linux/amlogic/pm.h
++++ b/include/linux/amlogic/pm.h
+@@ -31,6 +31,7 @@
+ #define	CEC_WAKEUP			8
+ #define	REMOTE_CUS_WAKEUP		9
+ #define ETH_PHY_WAKEUP      10
++#define ETH_PHY_WAKEUP_GPIO      12
+ extern unsigned int get_resume_method(void);
+ extern unsigned int is_pm_freeze_mode(void);
+ 
+diff --git a/include/linux/phy.h b/include/linux/phy.h
+index 867110c..f4a1811 100644
+--- a/include/linux/phy.h
++++ b/include/linux/phy.h
+@@ -856,7 +856,7 @@ int phy_ethtool_set_link_ksettings(struct net_device *ndev,
+ void mdio_bus_exit(void);
+ 
+ extern struct bus_type mdio_bus_type;
+-
++extern void set_wol(void);
+ /**
+  * module_phy_driver() - Helper macro for registering PHY drivers
+  * @__phy_drivers: array of PHY drivers to register

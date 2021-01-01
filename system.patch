@@ -1,0 +1,31 @@
+commit 6fbd1a699d951cf19b266ba7849d428d5ef379fc
+Author: gwx <wx.gu@netxeon.com>
+Date:   Tue Apr 2 18:21:44 2019 +0800
+
+    for system and vendor partition
+    
+    Conflicts:
+    	arch/arm/boot/dts/amlogic/partition_mbox_normal_P_32.dtsi
+
+diff --git a/arch/arm/boot/dts/amlogic/partition_mbox_normal_P_32.dtsi b/arch/arm/boot/dts/amlogic/partition_mbox_normal_P_32.dtsi
+index ecedba6..c85b2fd 100644
+--- a/arch/arm/boot/dts/amlogic/partition_mbox_normal_P_32.dtsi
++++ b/arch/arm/boot/dts/amlogic/partition_mbox_normal_P_32.dtsi
+@@ -90,7 +90,7 @@
+ 		vendor:vendor
+ 		{
+ 			pname = "vendor";
+-			size = <0x0 0x14000000>;
++			size = <0x0 0x30000000>;
+ 			mask = <1>;
+ 		};
+ 		odm:odm
+@@ -102,7 +102,7 @@
+ 		system:system
+ 		{
+ 			pname = "system";
+-			size = <0x0 0x50000000>;
++			size = <0x0 0x80000000>;
+ 			mask = <1>;
+ 		};
+ 		product:product{

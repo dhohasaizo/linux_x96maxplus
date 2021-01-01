@@ -1,0 +1,194 @@
+diff --git a/drivers/net/ethernet/stmicro/stmmac/dwmac-meson.c b/drivers/net/ethernet/stmicro/stmmac/dwmac-meson.c
+index d3073cd..aa30b97 100644
+--- a/drivers/net/ethernet/stmicro/stmmac/dwmac-meson.c
++++ b/drivers/net/ethernet/stmicro/stmmac/dwmac-meson.c
+@@ -76,6 +76,7 @@ static void meson6_dwmac_fix_mac_speed(void *priv, unsigned int speed)
+ 	val = readl(dwmac->reg);
+ 
+ 	switch (speed) {
++		 pr_info("%s - %d : length =gu ++%u+++++\n", __func__, __LINE__,speed);
+ 	case SPEED_10:
+ 		val &= ~ETHMAC_SPEED_100;
+ 		break;
+diff --git a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c b/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c
+index 9c67ccf..9a808c6 100644
+--- a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c
++++ b/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c
+@@ -722,6 +722,7 @@ static void stmmac_adjust_link(struct net_device *dev)
+ 	int new_state = 0;
+ 	unsigned int fc = priv->flow_ctrl, pause_time = priv->pause;
+ 
++	pr_info("%s - %d : length =gu ++%d+++++%d+++++++%d+++++%d\n", __func__, __LINE__,priv->oldduplex,phydev->duplex,phydev->speed,priv->speed);
+ 	if (phydev == NULL)
+ 		return;
+ 
+@@ -732,6 +733,7 @@ static void stmmac_adjust_link(struct net_device *dev)
+ 
+ 		/* Now we make sure that we can be in full duplex mode.
+ 		 * If not, we operate in half-duplex mode. */
++	pr_info("%s - %d : length =gu ++%d+++++%d+++++++%d+++++%d\n", __func__, __LINE__,priv->oldduplex,phydev->duplex,phydev->speed,priv->speed);
+ 		if (phydev->duplex != priv->oldduplex) {
+ 			new_state = 1;
+ 			if (!(phydev->duplex))
+@@ -741,26 +743,31 @@ static void stmmac_adjust_link(struct net_device *dev)
+ 			priv->oldduplex = phydev->duplex;
+ 		}
+ 		/* Flow Control operation */
++	pr_info("%s - %d : length =gu11 ++%d+++++%d+++++++%d+++++%d\n", __func__, __LINE__,priv->oldduplex,phydev->duplex,phydev->speed,priv->speed);
++
+ 		if (phydev->pause)
+ 			priv->hw->mac->flow_ctrl(priv->hw, phydev->duplex,
+ 						 fc, pause_time);
+-
++	pr_info("%s - %d : length =gu ++%d+++++%d\n", __func__, __LINE__,phydev->speed,priv->speed);
+ 		if (phydev->speed != priv->speed) {
+ 			new_state = 1;
+ 			switch (phydev->speed) {
+ 			case 1000:
+-				if (likely((priv->plat->has_gmac) ||
++		/*		if (likely((priv->plat->has_gmac) ||
+ 					   (priv->plat->has_gmac4)))
+ 					ctrl &= ~priv->hw->link.port;
+ 				stmmac_hw_fix_mac_speed(priv);
+-				break;
++				break;*/
+ 			case 100:
+ 			case 10:
+ 				if (likely((priv->plat->has_gmac) ||
+ 					   (priv->plat->has_gmac4))) {
+ 					ctrl |= priv->hw->link.port;
+-					if (phydev->speed == SPEED_100) {
+-						ctrl |= priv->hw->link.speed;
++					if (phydev->speed == SPEED_100 || phydev->speed == SPEED_1000) {
++						if(phydev->speed == SPEED_1000){
++							phydev->speed = SPEED_100;
++						}
++					ctrl |= priv->hw->link.speed;
+ 					} else {
+ 						ctrl &= ~(priv->hw->link.speed);
+ 					}
+@@ -777,6 +784,7 @@ static void stmmac_adjust_link(struct net_device *dev)
+ 			}
+ 
+ 			priv->speed = phydev->speed;
++	pr_info("%s - %d : length =gu44444 ++%d+++++%d\n", __func__, __LINE__,phydev->speed,priv->speed);
+ 		}
+ 
+ 		writel(ctrl, priv->ioaddr + MAC_CTRL_REG);
+@@ -842,6 +850,7 @@ static void stmmac_check_pcs_mode(struct stmmac_priv *priv)
+  *  Return value:
+  *  0 on success
+  */
++
+ static int stmmac_init_phy(struct net_device *dev)
+ {
+ 	struct stmmac_priv *priv = netdev_priv(dev);
+@@ -849,10 +858,12 @@ static int stmmac_init_phy(struct net_device *dev)
+ 	char phy_id_fmt[MII_BUS_ID_SIZE + 3];
+ 	char bus_id[MII_BUS_ID_SIZE];
+ 	int interface = priv->plat->interface;
+-	int max_speed = priv->plat->max_speed;
++	int max_speed = 100;
++	//int max_speed = priv->plat->max_speed;
+ 	priv->oldlink = 0;
+ 	priv->speed = 0;
+ 	priv->oldduplex = -1;
++	pr_info("%s - %d : length =gu44444 ++%d+++++%d\n", __func__, __LINE__,interface,priv->plat->max_speed);
+ 
+ 	if (priv->plat->phy_node) {
+ 		phydev = of_phy_connect(dev, priv->plat->phy_node,
+diff --git a/drivers/net/ethernet/ti/cpsw.c b/drivers/net/ethernet/ti/cpsw.c
+index d7cb205..28cec81 100644
+--- a/drivers/net/ethernet/ti/cpsw.c
++++ b/drivers/net/ethernet/ti/cpsw.c
+@@ -884,11 +884,13 @@ static void _cpsw_adjust_link(struct cpsw_slave *slave,
+ 	u32			mac_control = 0;
+ 	u32			slave_port;
+ 	struct cpsw_common *cpsw = priv->cpsw;
+-
++	
++		 pr_info("%s - %d : length =gu +++++++\n", __func__, __LINE__);
+ 	if (!phy)
+ 		return;
+ 
+ 	slave_port = cpsw_get_slave_port(slave->slave_num);
++		 pr_info("%s - %d : length =gu ++%d+++++\n", __func__, __LINE__,phy->speed);
+ 
+ 	if (phy->link) {
+ 		mac_control = cpsw->data.mac_control;
+@@ -896,7 +898,7 @@ static void _cpsw_adjust_link(struct cpsw_slave *slave,
+ 		/* enable forwarding */
+ 		cpsw_ale_control_set(cpsw->ale, slave_port,
+ 				     ALE_PORT_STATE, ALE_PORT_STATE_FORWARD);
+-
++		 pr_info("%s - %d : length =gu ++%d+++++\n", __func__, __LINE__,phy->speed);
+ 		if (phy->speed == 1000)
+ 			mac_control |= BIT(7);	/* GIGABITEN	*/
+ 		if (phy->duplex)
+@@ -937,7 +939,7 @@ static void cpsw_adjust_link(struct net_device *ndev)
+ 	bool			link = false;
+ 
+ 	for_each_slave(priv, _cpsw_adjust_link, priv, &link);
+-
++pr_info("%s - %d : length =gu ++%d+++++\n", __func__, __LINE__,link);
+ 	if (link) {
+ 		netif_carrier_on(ndev);
+ 		if (netif_running(ndev))
+diff --git a/drivers/net/phy/phy.c b/drivers/net/phy/phy.c
+index 4d21764..a0cbe3c7 100644
+--- a/drivers/net/phy/phy.c
++++ b/drivers/net/phy/phy.c
+@@ -281,6 +281,7 @@ static inline bool phy_check_valid(int speed, int duplex, u32 features)
+ 
+ 	idx = phy_find_valid(phy_find_setting(speed, duplex), features);
+ 
++	pr_info("%s - %d : length =5idx ++%d++++:%u\n", __func__, __LINE__,settings[idx].speed,idx);
+ 	return settings[idx].speed == speed && settings[idx].duplex == duplex &&
+ 		(settings[idx].setting & features);
+ }
+@@ -304,8 +305,9 @@ static void phy_sanitize_settings(struct phy_device *phydev)
+ 
+ 	idx = phy_find_valid(phy_find_setting(phydev->speed, phydev->duplex),
+ 			features);
+-
++pr_info("%s - %d : length =4idx ++%u\n", __func__, __LINE__,idx);
+ 	phydev->speed = settings[idx].speed;
++	pr_info("%s - %d : length =3 ++%d\n", __func__, __LINE__,phydev->speed);
+ 	phydev->duplex = settings[idx].duplex;
+ }
+ 
+@@ -349,7 +351,7 @@ int phy_ethtool_sset(struct phy_device *phydev, struct ethtool_cmd *cmd)
+ 	phydev->autoneg = cmd->autoneg;
+ 
+ 	phydev->speed = speed;
+-
++pr_info("%s - %d : length =2 ++%d\n", __func__, __LINE__,phydev->speed);
+ 	phydev->advertising = cmd->advertising;
+ 
+ 	if (AUTONEG_ENABLE == cmd->autoneg)
+@@ -403,7 +405,7 @@ int phy_ethtool_ksettings_set(struct phy_device *phydev,
+ 	phydev->autoneg = autoneg;
+ 
+ 	phydev->speed = speed;
+-
++	pr_info("%s - %d : length =1 ++%d\n", __func__, __LINE__,phydev->speed);
+ 	phydev->advertising = advertising;
+ 
+ 	if (autoneg == AUTONEG_ENABLE)
+@@ -511,10 +513,14 @@ int phy_mii_ioctl(struct phy_device *phydev, struct ifreq *ifr, int cmd)
+ 						phydev->duplex = DUPLEX_FULL;
+ 					else
+ 						phydev->duplex = DUPLEX_HALF;
+-					if (val & BMCR_SPEED1000)
++					if (val & BMCR_SPEED1000){
+ 						phydev->speed = SPEED_1000;
+-					else if (val & BMCR_SPEED100)
++					       pr_info("%s - %d : length =BMCR_SPEED1000 ++%d\n", __func__, __LINE__,phydev->speed);
++					}
++					else if (val & BMCR_SPEED100){
+ 						phydev->speed = SPEED_100;
++					pr_info("%s - %d : length =BMCR_SPEED100 ++%d\n", __func__, __LINE__,phydev->speed);
++					}
+ 					else phydev->speed = SPEED_10;
+ 				}
+ 				else {

@@ -1,0 +1,142 @@
+commit d033cded44b886df9f3f19ece6b1248cc2ab92dc
+Author: Hong Guo <hong.guo@amlogic.com>
+Date:   Thu Dec 20 15:24:23 2018 +0800
+
+    CPUFREQ: use gp1 pll for cpufreq. [1/1]
+    
+    PD#SWPL-3826
+    
+    Problem:
+    use gp1 pll for cpufreq.
+    
+    Solution:
+    use gp1 pll for cpufreq.
+    
+    Verify:
+    x301_tl1
+    
+    Change-Id: Iefb6d31ec40ba304f41024e4b7adceec881d043e
+    Signed-off-by: Hong Guo <hong.guo@amlogic.com>
+    Signed-off-by: Luan Yuan <luan.yuan@amlogic.com>
+
+diff --git a/arch/arm/boot/dts/amlogic/mesontl1.dtsi b/arch/arm/boot/dts/amlogic/mesontl1.dtsi
+index 5444da1..c6f27c9 100644
+--- a/arch/arm/boot/dts/amlogic/mesontl1.dtsi
++++ b/arch/arm/boot/dts/amlogic/mesontl1.dtsi
+@@ -52,6 +52,8 @@
+ 				"dsu_clk",
+ 				"dsu_pre_parent";
+ 			operating-points-v2 = <&cpu_opp_table0>;
++			/*set dynamic gp1 clk to val * 1000 *1000*/
++			dynamic_gp1_clk = <1000>;
+ 			cpu-supply = <&vddcpu0>;
+ 			//cpu-idle-states = <&SYSTEM_SLEEP_0>;
+ 		};
+@@ -73,6 +75,8 @@
+ 				"dsu_clk",
+ 				"dsu_pre_parent";
+ 			operating-points-v2 = <&cpu_opp_table0>;
++			/*set dynamic gp1 clk to val * 1000 *1000*/
++			dynamic_gp1_clk = <1000>;
+ 			cpu-supply = <&vddcpu0>;
+ 			//cpu-idle-states = <&SYSTEM_SLEEP_0>;
+ 		};
+@@ -94,6 +98,8 @@
+ 				"dsu_clk",
+ 				"dsu_pre_parent";
+ 			operating-points-v2 = <&cpu_opp_table0>;
++			/*set dynamic gp1 clk to val * 1000 *1000*/
++			dynamic_gp1_clk = <1000>;
+ 			cpu-supply = <&vddcpu0>;
+ 			//cpu-idle-states = <&SYSTEM_SLEEP_0>;
+ 		};
+@@ -115,6 +121,8 @@
+ 				"dsu_clk",
+ 				"dsu_pre_parent";
+ 			operating-points-v2 = <&cpu_opp_table0>;
++			/*set dynamic gp1 clk to val * 1000 *1000*/
++			dynamic_gp1_clk = <1000>;
+ 			cpu-supply = <&vddcpu0>;
+ 			//cpu-idle-states = <&SYSTEM_SLEEP_0>;
+ 		};
+diff --git a/drivers/amlogic/cpufreq/meson-cpufreq.c b/drivers/amlogic/cpufreq/meson-cpufreq.c
+index 26ebcd0..039272e 100644
+--- a/drivers/amlogic/cpufreq/meson-cpufreq.c
++++ b/drivers/amlogic/cpufreq/meson-cpufreq.c
+@@ -37,7 +37,7 @@
+ #include <linux/delay.h>
+ #include <linux/regulator/driver.h>
+ #include <linux/regulator/driver.h>
+-
++#include <linux/amlogic/pm.h>
+ #include "../../regulator/internal.h"
+ #include <linux/amlogic/scpi_protocol.h>
+ #include "../../base/power/opp/opp.h"
+@@ -122,7 +122,6 @@ static unsigned int meson_cpufreq_set_rate(struct cpufreq_policy *policy,
+ 		if (__clk_get_enable_count(high_freq_clk_p) >= 1)
+ 			clk_disable_unprepare(high_freq_clk_p);
+ 	}
+-
+ 	if (!ret) {
+ 		/*
+ 		 * FIXME: clk_set_rate hasn't returned an error here however it
+@@ -548,6 +547,14 @@ static int meson_cpufreq_init(struct cpufreq_policy *policy)
+ 		volt_tol = DEF_VOLT_TOL;
+ 	pr_info("value of voltage_tolerance %u\n", volt_tol);
+ 
++	if (of_property_read_u32(np, "dynamic_gp1_clk",
++				&gp1_clk_target)) {
++		pr_err("%s:don't find the node <dynamic_gp1_clk>\n",
++				__func__);
++		gp1_clk_target = 0;
++	}
++	pr_info("value of gp1_clk_target %u\n", gp1_clk_target);
++
+ 	if (cur_cluster < MAX_CLUSTERS)
+ 		cpumask_copy(policy->cpus, topology_core_cpumask(policy->cpu));
+ 
+@@ -673,8 +680,31 @@ static int meson_cpufreq_exit(struct cpufreq_policy *policy)
+ 
+ static int meson_cpufreq_suspend(struct cpufreq_policy *policy)
+ {
++	struct clk *dsu_pre_parent;
++	struct meson_cpufreq_driver_data *cpufreq_data;
++	int ret = 0;
+ 
+-	return cpufreq_generic_suspend(policy);
++	cpufreq_data = policy->driver_data;
++	dsu_pre_parent = cpufreq_data->clk_dsu_pre;
++
++	if (is_pm_freeze_mode() && gp1_clk_target) {
++		ret =  __cpufreq_driver_target(policy, gp1_clk_target
++				* 1000, CPUFREQ_RELATION_H);
++		if (__clk_get_enable_count(dsu_pre_parent) == 0) {
++			ret = clk_prepare_enable(dsu_pre_parent);
++			if (ret) {
++				pr_err("%s: CPU%d gp1 pll enable failed,ret = %d\n",
++					__func__, policy->cpu, ret);
++				return ret;
++			}
++		}
++		/*set gp1 pll to 1.2G*/
++		clk_set_rate(dsu_pre_parent, 1200 * 1000 * 1000);
++		pr_info("gp1 pll =%lu!\n", clk_get_rate(dsu_pre_parent));
++		return ret;
++	} else
++		return cpufreq_generic_suspend(policy);
++	return 0;
+ }
+ 
+ static int meson_cpufreq_resume(struct cpufreq_policy *policy)
+diff --git a/drivers/amlogic/cpufreq/meson-cpufreq.h b/drivers/amlogic/cpufreq/meson-cpufreq.h
+index 09d6b2e..d7b16a0 100644
+--- a/drivers/amlogic/cpufreq/meson-cpufreq.h
++++ b/drivers/amlogic/cpufreq/meson-cpufreq.h
+@@ -57,6 +57,7 @@
+ #define DSU_HIGH_RATE (1500 * 1000)
+ #define CPU_CMP_RATE (1800 * 1000)
+ 
++unsigned int gp1_clk_target;
+ /*whether use different tables or not*/
+ bool cpufreq_tables_supply;
+ static unsigned int hispeed_cpufreq_max;

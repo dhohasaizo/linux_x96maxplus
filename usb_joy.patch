@@ -1,0 +1,42 @@
+diff --git a/arch/arm/configs/meson64_a32_defconfig b/arch/arm/configs/meson64_a32_defconfig
+index 1bcbcb8..6e94b79 100755
+--- a/arch/arm/configs/meson64_a32_defconfig
++++ b/arch/arm/configs/meson64_a32_defconfig
+@@ -444,7 +444,7 @@ CONFIG_ATH10K_PCI=m
+ CONFIG_INPUT_POLLDEV=y
+ CONFIG_INPUT_EVDEV=y
+ CONFIG_INPUT_JOYSTICK=y
+-CONFIG_JOYSTICK_XPAD=m
++CONFIG_JOYSTICK_XPAD=y
+ CONFIG_USB_ARCH_HAS_HCD=y
+ CONFIG_USB=y
+ CONFIG_JOYSTICK_XPAD_FF=y
+diff --git a/drivers/usb/core/hub.c b/drivers/usb/core/hub.c
+index f7f6a00..24155c1 100644
+--- a/drivers/usb/core/hub.c
++++ b/drivers/usb/core/hub.c
+@@ -4513,9 +4513,7 @@ static int hub_enable_device(struct usb_device *udev)
+ 				 * reset. But only on the first attempt,
+ 				 * lest we get into a time out/reset loop
+ 				 */
+-				if (r == 0 || (r == -ETIMEDOUT &&
+-						retries == 0 &&
+-						udev->speed > USB_SPEED_FULL))
++				if (r == 0)
+ 					break;
+ 			}
+ 			udev->descriptor.bMaxPacketSize0 =
+diff --git a/drivers/usb/host/xhci-hub.c b/drivers/usb/host/xhci-hub.c
+index ef0bd14..faccd75 100644
+--- a/drivers/usb/host/xhci-hub.c
++++ b/drivers/usb/host/xhci-hub.c
+@@ -558,6 +558,9 @@ static void xhci_clear_port_change_bit(struct xhci_hcd *xhci, u16 wValue,
+ 	if (DEV_LOWSPEED(port_status) &&
+ 		(wValue == USB_PORT_FEAT_C_RESET))
+ 		set_usb_phy_host_low_reset(wIndex);
++	if (DEV_FULLSPEED(port_status) &&
++		(wValue == USB_PORT_FEAT_C_RESET))
++		set_usb_phy_host_tuning(wIndex, 0);
+ #endif
+ }
+ 

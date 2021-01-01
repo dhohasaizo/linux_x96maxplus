@@ -1,0 +1,25 @@
+diff --git a/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts b/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
+index 251cdef..8883901 100644
+--- a/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
++++ b/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
+@@ -46,7 +46,7 @@
+ 
+ 	memory@00000000 {
+ 		device_type = "memory";
+-		linux,usable-memory = <0x000000 0xf0800000>;
++		linux,usable-memory = <0x0100000 0xf0800000>;
+ 	};
+ 
+ 	reserved-memory {
+diff --git a/arch/arm/configs/meson64_a32_defconfig b/arch/arm/configs/meson64_a32_defconfig
+index c56b9c4..643e93b 100644
+--- a/arch/arm/configs/meson64_a32_defconfig
++++ b/arch/arm/configs/meson64_a32_defconfig
+@@ -438,6 +438,7 @@ CONFIG_ATH10K=m
+ CONFIG_ATH10K_PCI=m
+ CONFIG_INPUT_POLLDEV=y
+ CONFIG_INPUT_EVDEV=y
++CONFIG_INPUT_JOYDEV=y
+ CONFIG_INPUT_JOYSTICK=y
+ CONFIG_JOYSTICK_XPAD=y
+ CONFIG_JOYSTICK_XPAD_FF=y

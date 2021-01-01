@@ -1,0 +1,13 @@
+diff --git a/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts b/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts
+index 2c2373b..6b48feb 100644
+--- a/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts
++++ b/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts
+@@ -1348,7 +1348,7 @@
+ &dwc2_a {
+ 	status = "okay";
+ 	/** 0: normal, 1: otg+dwc3 host only, 2: otg+dwc3 device only*/
+-	controller-type = <2>;
++	controller-type = <3>;
+ };
+ &ethmac {
+ 	status = "okay";

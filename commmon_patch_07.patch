@@ -1,0 +1,37 @@
+commit 47d6b33ff954731eef40f9646435080697e84f33
+Author: Bencheng Jing <bencheng.jing@amlogic.com>
+Date:   Wed Oct 16 19:06:03 2019 +0800
+
+    vpp: dynamic adjust scaler path according to supsc0 h&v ratio [2/2]
+    
+    PD#SWPL-12202
+    
+    Problem:
+    scaler path need adjust according to supsc0 h&v ratio
+    
+    Solution:
+    add dynamic adjust scaler path
+    
+    Verify:
+    g12a&sm1
+    
+    Change-Id: If00b4c321e24910ff7abd166d9a828dc424ab0d0
+    Signed-off-by: Bencheng Jing <bencheng.jing@amlogic.com>
+
+diff --git a/drivers/amlogic/media/video_sink/vpp.c b/drivers/amlogic/media/video_sink/vpp.c
+index a53ace0..55ab31a 100644
+--- a/drivers/amlogic/media/video_sink/vpp.c
++++ b/drivers/amlogic/media/video_sink/vpp.c
+@@ -2071,7 +2071,11 @@ static void vpp_set_super_scaler(
+ 			is_meson_g12a_cpu() ||
+ 			is_meson_g12b_cpu() ||
+ 			is_meson_sm1_cpu()) {
+-			next_frame_par->supscl_path = CORE0_BEFORE_PPS;
++			if (next_frame_par->supsc0_hori_ratio &&
++			    next_frame_par->supsc0_vert_ratio)
++				next_frame_par->supscl_path = CORE0_BEFORE_PPS;
++			else
++				next_frame_par->supscl_path = CORE0_AFTER_PPS;
+ 		} else
+ 			next_frame_par->supscl_path = CORE0_PPS_CORE1;
+ 	} else

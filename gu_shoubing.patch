@@ -1,0 +1,70 @@
+diff --git a/arch/arm/configs/meson64_a32_defconfig b/arch/arm/configs/meson64_a32_defconfig
+index 4c584ba..1c30541 100644
+--- a/arch/arm/configs/meson64_a32_defconfig
++++ b/arch/arm/configs/meson64_a32_defconfig
+@@ -439,16 +439,22 @@ CONFIG_PPPOLAC=y
+ CONFIG_PPPOPNS=y
+ CONFIG_PPP_ASYNC=y
+ CONFIG_USB_USBNET=y
++CONFIG_INPUT_JOYDEV=y
+ CONFIG_ATH10K=m
+ CONFIG_ATH10K_PCI=m
+ CONFIG_INPUT_POLLDEV=y
+ CONFIG_INPUT_EVDEV=y
+ CONFIG_INPUT_JOYSTICK=y
+-CONFIG_JOYSTICK_XPAD=y
++CONFIG_USB_ARCH_HAS_HCD=y
++CONFIG_USB=y
++CONFIG_JOYSTICK_XPAD=m
+ CONFIG_JOYSTICK_XPAD_FF=y
+ CONFIG_JOYSTICK_XPAD_LEDS=y
+ CONFIG_INPUT_MISC=y
+ CONFIG_INPUT_UINPUT=y
++CONFIG_INPUT=y
++CONFIG_USB_HID=y
++CONFIG_GAMEPORT=m
+ CONFIG_LEGACY_PTY_COUNT=32
+ # CONFIG_DEVMEM is not set
+ # CONFIG_DEVKMEM is not set
+@@ -507,6 +513,9 @@ CONFIG_AMLOGIC_SND_SOC_CS42528=y
+ CONFIG_AMLOGIC_SND_SOC=y
+ CONFIG_AMLOGIC_SND_SOC_MESON=y
+ CONFIG_AMLOGIC_SND_SOC_AUGE=y
++CONFIG_HID=y
++CONFIG_HID_PS3REMOTE=m
++CONFIG_HID_SONY=m
+ CONFIG_AMLOGIC_SND_SPLIT_MODE=y
+ CONFIG_AMLOGIC_SND_SOC_COMMON=y
+ CONFIG_HIDRAW=y
+diff --git a/drivers/hid/Kconfig b/drivers/hid/Kconfig
+index 8eed456..5b43797 100644
+--- a/drivers/hid/Kconfig
++++ b/drivers/hid/Kconfig
+@@ -707,7 +707,14 @@ config HID_PRIMAX
+ 	---help---
+ 	Support for Primax devices that are not fully compliant with the
+ 	HID standard.
+-
++config HID_PS3REMOTE
++       tristate "Sony PS3 BD Remote Control"
++       depends on HID
++       ---help---
++       Support for the Sony PS3 Blue-ray Disk Remote Control and Logitech
++       Harmony Adapter for PS3, which connect over Bluetooth.
++
++       Support for the 6-axis controllers is provided by HID_SONY.
+ config HID_ROCCAT
+ 	tristate "Roccat device support"
+ 	depends on USB_HID
+diff --git a/drivers/hid/Makefile b/drivers/hid/Makefile
+index 86b2b57..5235f0c 100644
+--- a/drivers/hid/Makefile
++++ b/drivers/hid/Makefile
+@@ -78,6 +78,7 @@ hid-picolcd-$(CONFIG_DEBUG_FS)		+= hid-picolcd_debugfs.o
+ 
+ obj-$(CONFIG_HID_PLANTRONICS)	+= hid-plantronics.o
+ obj-$(CONFIG_HID_PRIMAX)	+= hid-primax.o
++obj-$(CONFIG_HID_PS3REMOTE)    += hid-ps3remote.o
+ obj-$(CONFIG_HID_ROCCAT)	+= hid-roccat.o hid-roccat-common.o \
+ 	hid-roccat-arvo.o hid-roccat-isku.o hid-roccat-kone.o \
+ 	hid-roccat-koneplus.o hid-roccat-konepure.o hid-roccat-kovaplus.o \

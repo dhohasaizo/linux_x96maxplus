@@ -1,0 +1,94 @@
+commit e165b1bbcca0c5b0ef7928a3907a2f9a9a655948
+Author: Zongdong Jiao <zongdong.jiao@amlogic.com>
+Date:   Mon Oct 21 21:44:56 2019 +0800
+
+    hdmitx: add missing 'product_desc' in SPD infoframe [1/1]
+    
+    PD#SWPL-14801
+    
+    Problem:
+    Sharp/LCD-42GX50A TV will be black when it receives vendor_name
+    but without product_desc in SPD infoframe
+    
+    Solution:
+    Add missing 'product_desc' in SPD infoframe
+    
+    Verify:
+    G12A/U212
+    
+    Change-Id: I630fa416580855883a80be2747d39887ef67ef5c
+    Signed-off-by: Zongdong Jiao <zongdong.jiao@amlogic.com>
+    Signed-off-by: Luan Yuan <luan.yuan@amlogic.com>
+
+diff --git a/arch/arm/boot/dts/amlogic/mesong12a.dtsi b/arch/arm/boot/dts/amlogic/mesong12a.dtsi
+index 5a53344..b334701 100644
+--- a/arch/arm/boot/dts/amlogic/mesong12a.dtsi
++++ b/arch/arm/boot/dts/amlogic/mesong12a.dtsi
+@@ -1080,6 +1080,7 @@
+ 		cedst_en = <0>;
+ 		vend_data: vend_data{ /* Should modified by Customer */
+ 			vendor_name = "Amlogic"; /* Max Chars: 8 */
++			product_desc = "MBox Meson Ref"; /* Max Chars: 16 */
+ 			/* standards.ieee.org/develop/regauth/oui/oui.txt */
+ 			vendor_id = <0x000000>;
+ 		};
+diff --git a/arch/arm/boot/dts/amlogic/mesong12b.dtsi b/arch/arm/boot/dts/amlogic/mesong12b.dtsi
+index 1beb9a6..68be466 100644
+--- a/arch/arm/boot/dts/amlogic/mesong12b.dtsi
++++ b/arch/arm/boot/dts/amlogic/mesong12b.dtsi
+@@ -1126,6 +1126,7 @@
+ 		ic_type = <11>;
+ 		vend_data: vend_data{ /* Should modified by Customer */
+ 			vendor_name = "Amlogic"; /* Max Chars: 8 */
++			product_desc = "MBox Meson Ref"; /* Max Chars: 16 */
+ 			/* standards.ieee.org/develop/regauth/oui/oui.txt */
+ 			vendor_id = <0x000000>;
+ 		};
+diff --git a/arch/arm/boot/dts/amlogic/mesong12b_a.dtsi b/arch/arm/boot/dts/amlogic/mesong12b_a.dtsi
+index 54580c6..6e6905d 100644
+--- a/arch/arm/boot/dts/amlogic/mesong12b_a.dtsi
++++ b/arch/arm/boot/dts/amlogic/mesong12b_a.dtsi
+@@ -1127,6 +1127,7 @@
+ 		ic_type = <11>;
+ 		vend_data: vend_data{ /* Should modified by Customer */
+ 			vendor_name = "Amlogic"; /* Max Chars: 8 */
++			product_desc = "MBox Meson Ref"; /* Max Chars: 16 */
+ 			/* standards.ieee.org/develop/regauth/oui/oui.txt */
+ 			vendor_id = <0x000000>;
+ 		};
+diff --git a/arch/arm64/boot/dts/amlogic/mesong12a.dtsi b/arch/arm64/boot/dts/amlogic/mesong12a.dtsi
+index fc74cb1..699656f 100644
+--- a/arch/arm64/boot/dts/amlogic/mesong12a.dtsi
++++ b/arch/arm64/boot/dts/amlogic/mesong12a.dtsi
+@@ -1079,6 +1079,7 @@
+ 		dongle_mode = <0>;
+ 		vend_data: vend_data{ /* Should modified by Customer */
+ 			vendor_name = "Amlogic"; /* Max Chars: 8 */
++			product_desc = "MBox Meson Ref"; /* Max Chars: 16 */
+ 			/* standards.ieee.org/develop/regauth/oui/oui.txt */
+ 			vendor_id = <0x000000>;
+ 		};
+diff --git a/arch/arm64/boot/dts/amlogic/mesong12b.dtsi b/arch/arm64/boot/dts/amlogic/mesong12b.dtsi
+index de7f0d3..ef84c8e 100644
+--- a/arch/arm64/boot/dts/amlogic/mesong12b.dtsi
++++ b/arch/arm64/boot/dts/amlogic/mesong12b.dtsi
+@@ -1126,6 +1126,7 @@
+ 		ic_type = <11>;
+ 		vend_data: vend_data{ /* Should modified by Customer */
+ 			vendor_name = "Amlogic"; /* Max Chars: 8 */
++			product_desc = "MBox Meson Ref"; /* Max Chars: 16 */
+ 			/* standards.ieee.org/develop/regauth/oui/oui.txt */
+ 			vendor_id = <0x000000>;
+ 		};
+diff --git a/arch/arm64/boot/dts/amlogic/mesong12b_a.dtsi b/arch/arm64/boot/dts/amlogic/mesong12b_a.dtsi
+index cb626e1..e806327 100644
+--- a/arch/arm64/boot/dts/amlogic/mesong12b_a.dtsi
++++ b/arch/arm64/boot/dts/amlogic/mesong12b_a.dtsi
+@@ -1127,6 +1127,7 @@
+ 		ic_type = <11>;
+ 		vend_data: vend_data{ /* Should modified by Customer */
+ 			vendor_name = "Amlogic"; /* Max Chars: 8 */
++			product_desc = "MBox Meson Ref"; /* Max Chars: 16 */
+ 			/* standards.ieee.org/develop/regauth/oui/oui.txt */
+ 			vendor_id = <0x000000>;
+ 		};

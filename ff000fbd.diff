@@ -1,0 +1,68 @@
+From ff000fbdb1bff34dbc00f3a77ce86c048c398316 Mon Sep 17 00:00:00 2001
+From: Tao Zeng <tao.zeng@amlogic.com>
+Date: Thu, 16 May 2019 17:27:30 +0800
+Subject: [PATCH] vmalloc: restore 240mb memory space [2/3]
+
+PD#SWPL-8572
+
+Problem:
+To avoid vmalloc address space not enough caused by binder, in
+following change we have increased 128mb vmalloc address space:
+	http://scgit.amlogic.com:8080/#/c/72977/
+
+Solution:
+Since we have back porting binder optimize from kernel 4.19 in
+change:
+	http://scgit.amlogic.com:8080/#/c/73975/
+So we can restore 240mb memory space for vmalloc
+
+Verify:
+x301
+
+Change-Id: If16e83eadb9ab40bb7e0e2ca168dc604420cdac7
+Signed-off-by: Tao Zeng <tao.zeng@amlogic.com>
+---
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index d74f489..a55b22a 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -1445,7 +1445,7 @@
+ 	default PHYS_OFFSET if !MMU
+ 	default 0x40000000 if VMSPLIT_1G
+ 	default 0x80000000 if VMSPLIT_2G
+-	default 0xB8000000 if VMSPLIT_3G_OPT
++	default 0xB0000000 if VMSPLIT_3G_OPT
+ 	default 0xD0000000 if AMLOGIC_KASAN32
+ 	default 0xC0000000
+ 
+diff --git a/arch/arm/configs/meson64_a32_defconfig b/arch/arm/configs/meson64_a32_defconfig
+index 365651d..fe16d1a 100644
+--- a/arch/arm/configs/meson64_a32_defconfig
++++ b/arch/arm/configs/meson64_a32_defconfig
+@@ -43,7 +43,6 @@
+ CONFIG_PCIE_DW_PLAT=y
+ CONFIG_SMP=y
+ CONFIG_SCHED_MC=y
+-CONFIG_VMSPLIT_3G_OPT=y
+ CONFIG_NR_CPUS=8
+ CONFIG_PREEMPT=y
+ CONFIG_HZ_250=y
+diff --git a/arch/arm/mm/mmu.c b/arch/arm/mm/mmu.c
+index 8b20f8b..c7e41d4 100644
+--- a/arch/arm/mm/mmu.c
++++ b/arch/arm/mm/mmu.c
+@@ -1129,13 +1129,8 @@
+ #endif
+ 
+ #ifndef CONFIG_AMLOGIC_KASAN32
+-#ifdef CONFIG_AMLOGIC_MODIFY
+-static void * __initdata vmalloc_min =
+-	(void *)(VMALLOC_END - (368 << 20) - VMALLOC_OFFSET);
+-#else
+ static void * __initdata vmalloc_min =
+ 	(void *)(VMALLOC_END - (240 << 20) - VMALLOC_OFFSET);
+-#endif
+ 
+ /*
+  * vmalloc=size forces the vmalloc area to be exactly 'size'

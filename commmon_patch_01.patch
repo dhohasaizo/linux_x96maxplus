@@ -1,0 +1,33 @@
+commit fa60ca407eb95cf710e5d0a65c7caf0ce59b1dff
+Author: Zongdong Jiao <zongdong.jiao@amlogic.com>
+Date:   Tue Sep 24 21:42:35 2019 +0800
+
+    hdmitx: reduce the delay time of plugout [1/1]
+    
+    PD#OTT-6369
+    
+    Problem:
+    The HPD low time of some Monitor(such as LG) is about 30ms, less than 100ms
+    
+    Solution:
+    Reduce the delay time of plugout
+    
+    Verify:
+    G12A/U212
+    
+    Change-Id: I343223b5ef0696da035f0b3b179bdbfbce68c859
+    Signed-off-by: Zongdong Jiao <zongdong.jiao@amlogic.com>
+
+diff --git a/drivers/amlogic/media/vout/hdmitx/hdmi_tx_20/hw/hdmi_tx_hw.c b/drivers/amlogic/media/vout/hdmitx/hdmi_tx_20/hw/hdmi_tx_hw.c
+index 59e812d..f82951b 100644
+--- a/drivers/amlogic/media/vout/hdmitx/hdmi_tx_20/hw/hdmi_tx_hw.c
++++ b/drivers/amlogic/media/vout/hdmitx/hdmi_tx_20/hw/hdmi_tx_hw.c
+@@ -669,7 +669,7 @@ static irqreturn_t intr_handler(int irq, void *dev)
+ 		hdev->hdmitx_event &= ~HDMI_TX_HPD_PLUGIN;
+ 		hdev->rhpd_state = 0;
+ 		queue_delayed_work(hdev->hdmi_wq,
+-			&hdev->work_hpd_plugout, HZ / 20);
++			&hdev->work_hpd_plugout, HZ / 50);
+ 	}
+ 	/* internal interrupt */
+ 	if (dat_top & (1 << 0)) {

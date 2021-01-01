@@ -1,0 +1,54 @@
+commit 49baff0506ebec8bf110db214bab47ba66f431d1
+Author: fk.luo <fk.luo@trigtop.com>
+Date:   Fri Apr 19 13:46:16 2019 +0800
+
+    use g12b_a311d_w400_a
+    
+    Conflicts:
+    	arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
+
+diff --git a/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts b/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
+index 266aa51..44fc409 100644
+--- a/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
++++ b/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
+@@ -46,7 +46,7 @@
+ 
+ 	memory@00000000 {
+ 		device_type = "memory";
+-		linux,usable-memory = <0x000000 0x80000000>;
++		linux,usable-memory = <0x000000 0xf0800000>;
+ 	};
+ 
+ 	reserved-memory {
+@@ -531,7 +531,7 @@
+ 
+ 		//aml-audio-card,aux-devs = <&amlogic_codec>;
+ 		/*avout mute gpio*/
+-		avout_mute-gpios = <&gpio_ao GPIOAO_2 GPIO_ACTIVE_HIGH>;
++		avout_mute-gpios = <&gpio_ao GPIOAO_2 GPIO_ACTIVE_LOW>;
+ 		/*for audio effect ,eqdrc */
+ 		aml-audio-card,effect = <&audio_effect>;
+ 
+@@ -1417,7 +1417,7 @@
+ &usb3_phy_v2 {
+ 	status = "okay";
+ 	portnum = <1>;
+-	otg = <1>;
++	otg = <0>;
+ 	gpio-vbus-power = "GPIOH_6";
+ 	gpios = <&gpio GPIOH_6 GPIO_ACTIVE_HIGH>;
+ };
+@@ -1433,9 +1433,11 @@
+ 	pinctrl-names = "internal_eth_pins";
+ 	pinctrl-0 = <&internal_eth_pins>;
+ */
+-	mc_val = <0x4be04>;
++	pinctrl-names = "external_eth_pins";
++	pinctrl-0 = <&external_eth_pins>;
++	mc_val = <0x1621>;
+ 
+-	internal_phy=<1>;
++	internal_phy=<0>;
+ };
+ 
+ &uart_A {

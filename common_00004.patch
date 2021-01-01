@@ -1,0 +1,32 @@
+commit b0d105fb4a6bf4d8f395aec2333be1e7e46f063e
+Author: Eric <zrb@trigtop.com>
+Date:   Sun Sep 29 15:27:21 2019 +0800
+
+    fix dts eth
+
+diff --git a/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts b/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts
+index 9172c84..d2c13a9 100644
+--- a/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts
++++ b/arch/arm/boot/dts/amlogic/g12b_a311d_w400.dts
+@@ -1468,7 +1468,7 @@
+ */
+ 	pinctrl-names = "external_eth_pins";
+ 	pinctrl-0 = <&external_eth_pins>;
+-	mc_val = <0x1621>;
++	mc_val = <0x1629>;
+ 	cali_val = <0x60000>;
+ 	rx_delay = <1>;
+ 	auto_cali_idx = <0>;
+diff --git a/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts b/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
+index 1d70872..e366521 100644
+--- a/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
++++ b/arch/arm/boot/dts/amlogic/g12b_a311d_w400_a.dts
+@@ -1447,7 +1447,7 @@
+ 	pinctrl-names = "external_eth_pins";
+ 	pinctrl-0 = <&external_eth_pins>;
+ 	mc_val = <0x1621>;
+-	cali_val = <0x60000>;
++	cali_val = <0x10000>;
+ 	rx_delay = <1>;
+ 	auto_cali_idx = <0>;
+ 	internal_phy=<0>;
