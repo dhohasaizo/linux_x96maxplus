@@ -11,6 +11,6 @@ configuration your toolchain patch..see "buildx96max" script
 2.  ./buildx96max
 
 note:
-this is original kernel no include vfd driver x96maxPLUS
-i use vfd driver for https://github.com/anpaza/linux_vfd
-vfd run in daemon mode, 
+this is original kernel no include vfd driver. 
+i use vfd driver from " https://github.com/anpaza/linux_vfd "
+vfd driver run in daemon mode.
