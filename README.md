@@ -9,6 +9,7 @@ configuration your toolchain patch..see "buildx96max" script
 
 1.  cd {kernel source)
 2.  ./buildx96max
+3.  boot.img is generated in arch/arm/boot/boot.img
 
 note:
 this is original kernel no include vfd driver. 
